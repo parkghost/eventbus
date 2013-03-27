@@ -17,7 +17,7 @@ type EventBus struct {
 }
 
 type EventHandler interface {
-	onEvent(evt *Event)
+	OnEvent(evt *Event)
 }
 
 type Event interface {
@@ -75,9 +75,9 @@ func (self *EventBus) Publish(evt *Event) {
 
 func (self *EventBus) dispatch(evt *Event, handler *EventHandler) {
 	if self.async {
-		go EventHandler(*handler).onEvent(evt)
+		go EventHandler(*handler).OnEvent(evt)
 	} else {
-		EventHandler(*handler).onEvent(evt)
+		EventHandler(*handler).OnEvent(evt)
 	}
 }
 

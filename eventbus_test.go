@@ -25,7 +25,7 @@ type EventSubscriber struct {
 	expected func(evt *Event)
 }
 
-func (self EventSubscriber) onEvent(evt *Event) {
+func (self EventSubscriber) OnEvent(evt *Event) {
 	self.expected(evt)
 }
 
@@ -40,7 +40,7 @@ func TestEventBus(t *testing.T) {
 	var helloEvent Event = HelloEvent{}
 	var hiEvent Event = HiEvent{}
 
-	expectedReceiveEvent := func(expected *Event, t *testing.T, count int) func(actual *Event) {
+	expectedReceiveEvent := func(expected *Event, t *testing.T, count int) func(*Event) {
 		received := 0
 		return func(actual *Event) {
 			received += 1
@@ -80,7 +80,7 @@ func TestAsyncEventBus(t *testing.T) {
 	var hiEvent Event = HiEvent{}
 	wg := &sync.WaitGroup{}
 
-	expectedReceiveEvent := func(expected *Event, t *testing.T, count int, wg *sync.WaitGroup) func(actual *Event) {
+	expectedReceiveEvent := func(expected *Event, t *testing.T, count int, wg *sync.WaitGroup) func(*Event) {
 		received := 0
 		wg.Add(count)
 		return func(actual *Event) {
