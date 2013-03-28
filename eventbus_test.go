@@ -7,17 +7,9 @@ import (
 
 type HelloEvent struct{}
 
-func (self HelloEvent) String() string {
-	return "hello"
-}
-
 func (self HelloEvent) Event() {}
 
 type HiEvent struct{}
-
-func (self HiEvent) String() string {
-	return "hi"
-}
 
 func (self HiEvent) Event() {}
 

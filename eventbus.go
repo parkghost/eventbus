@@ -21,7 +21,6 @@ type EventHandler interface {
 }
 
 type Event interface {
-	String() string
 	Event()
 }
 

@@ -1,23 +1,20 @@
 package main
 
 import (
+	"../../eventbus"
 	"fmt"
-	"github.com/parkghost/eventbus"
 )
 
 //define custom event which implements eventbus.Event interface
 type HelloEvent struct{}
 
-func (self HelloEvent) String() string {
-	return "Hello"
-}
 func (self HelloEvent) Event() {}
 
 //define custom subscriber which implements eventbus.EventHandler interface
 type EventSubscriber struct{}
 
 func (self EventSubscriber) OnEvent(evt *eventbus.Event) {
-	fmt.Printf("receive event: %s", *evt)
+	fmt.Printf("receive event: %T\n", *evt)
 }
 
 func main() {
