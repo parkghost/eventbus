@@ -17,11 +17,11 @@ func NewSegmentedRWLock(segments int) *SegmentedRWLock {
 }
 
 func (self *SegmentedRWLock) locker(key string) *sync.RWMutex {
-	hash := abc(hash([]byte(key)))
+	hash := abs(hash([]byte(key)))
 	return &self.locks[hash%self.segments]
 }
 
-func abc(x int) int {
+func abs(x int) int {
 	if x < 0 {
 		return x * -1
 	}
