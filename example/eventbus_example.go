@@ -13,19 +13,19 @@ func (self HelloEvent) Event() {}
 //define custom subscriber which implements eventbus.EventHandler interface
 type EventSubscriber struct{}
 
-func (self EventSubscriber) OnEvent(evt *eventbus.Event) {
-	fmt.Printf("receive event: %T\n", *evt)
+func (self EventSubscriber) OnEvent(evt eventbus.Event) {
+	fmt.Printf("receive event: %T\n", evt)
 }
 
 func main() {
-	var helloEvent eventbus.Event = HelloEvent{}
-	var handler eventbus.EventHandler = EventSubscriber{}
+	var helloEvent = HelloEvent{}
+	var handler = &EventSubscriber{}
 
 	//the handler subscribe to HelloEvent via eventbus
-	eventbus.Subscribe(&helloEvent, &handler)
+	eventbus.Subscribe(helloEvent, handler)
 
 	//to publish HelloEvent to eventbus and then eventbus will notify who has subscribed to this event
-	eventbus.Publish(&helloEvent)
+	eventbus.Publish(helloEvent)
 
 	//to block main goroutine for print out async result from eventbus
 	var input string

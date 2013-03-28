@@ -12,12 +12,12 @@ import (
 
 type EventBus struct {
 	locks    *SegmentedRWLock
-	handlers map[string]map[*EventHandler]None
+	handlers map[string]map[EventHandler]None
 	async    bool
 }
 
 type EventHandler interface {
-	OnEvent(evt *Event)
+	OnEvent(evt Event)
 }
 
 type Event interface {
@@ -26,7 +26,7 @@ type Event interface {
 
 type None struct{}
 
-func (self *EventBus) Unsubscribe(evt *Event, handler *EventHandler) {
+func (self *EventBus) Unsubscribe(evt Event, handler EventHandler) {
 	eventType := resolveType(evt)
 	locker := self.locks.locker(eventType)
 	locker.Lock()
@@ -36,11 +36,11 @@ func (self *EventBus) Unsubscribe(evt *Event, handler *EventHandler) {
 	if ok {
 		delete(handlers, handler)
 	} else {
-		panic(fmt.Sprint("the event '%s' doesn't exist", *evt))
+		panic(fmt.Sprint("the event '%s' doesn't exist", eventType))
 	}
 }
 
-func (self *EventBus) Subscribe(evt *Event, handler *EventHandler) {
+func (self *EventBus) Subscribe(evt Event, handler EventHandler) {
 	eventType := resolveType(evt)
 	locker := self.locks.locker(eventType)
 	locker.Lock()
@@ -50,14 +50,14 @@ func (self *EventBus) Subscribe(evt *Event, handler *EventHandler) {
 	if ok {
 		handlers[handler] = None{}
 	} else {
-		handlers := make(map[*EventHandler]None)
+		handlers := make(map[EventHandler]None)
 		handlers[handler] = None{}
 		self.handlers[eventType] = handlers
 	}
 
 }
 
-func (self *EventBus) Publish(evt *Event) {
+func (self *EventBus) Publish(evt Event) {
 	eventType := resolveType(evt)
 	locker := self.locks.locker(eventType)
 	locker.RLock()
@@ -72,32 +72,32 @@ func (self *EventBus) Publish(evt *Event) {
 
 }
 
-func (self *EventBus) dispatch(evt *Event, handler *EventHandler) {
+func (self *EventBus) dispatch(evt Event, handler EventHandler) {
 	if self.async {
-		go EventHandler(*handler).OnEvent(evt)
+		go handler.OnEvent(evt)
 	} else {
-		EventHandler(*handler).OnEvent(evt)
+		handler.OnEvent(evt)
 	}
 }
 
-func resolveType(evt *Event) string {
-	return reflect.TypeOf(*evt).String()
+func resolveType(evt Event) string {
+	return reflect.TypeOf(evt).String()
 }
 
 var DefaultEventBus = &EventBus{
 	locks:    NewSegmentedRWLock(32),
-	handlers: make(map[string]map[*EventHandler]None),
+	handlers: make(map[string]map[EventHandler]None),
 	async:    true,
 }
 
-func Unsubscribe(evt *Event, handler *EventHandler) {
+func Unsubscribe(evt Event, handler EventHandler) {
 	DefaultEventBus.Unsubscribe(evt, handler)
 }
 
-func Subscribe(evt *Event, handler *EventHandler) {
+func Subscribe(evt Event, handler EventHandler) {
 	DefaultEventBus.Subscribe(evt, handler)
 }
 
-func Publish(evt *Event) {
+func Publish(evt Event) {
 	DefaultEventBus.Publish(evt)
 }
