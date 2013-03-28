@@ -5,13 +5,20 @@ import (
 	"testing"
 )
 
-type HelloEvent struct{}
+type SimpleEvent struct {
+}
 
-func (self HelloEvent) Event() {}
+func (self SimpleEvent) Event() string {
+	return ""
+}
 
-type HiEvent struct{}
+type SubtypeEvent struct {
+	Text string
+}
 
-func (self HiEvent) Event() {}
+func (self SubtypeEvent) Event() string {
+	return self.Text
+}
 
 type EventSubscriber struct {
 	expected func(evt Event)
@@ -29,8 +36,9 @@ func TestEventBus(t *testing.T) {
 		async:    false,
 	}
 
-	var helloEvent = HelloEvent{}
-	var hiEvent = HiEvent{}
+	var simpleEvent = SimpleEvent{}
+	var helloEvent = SubtypeEvent{"hello"}
+	var hiEvent = SubtypeEvent{"hi"}
 
 	expectedReceiveEvent := func(expected Event, t *testing.T, count int) func(Event) {
 		received := 0
@@ -46,15 +54,18 @@ func TestEventBus(t *testing.T) {
 		}
 	}
 
-	var a, b, c = &EventSubscriber{expectedReceiveEvent(helloEvent, t, 1)}, &EventSubscriber{expectedReceiveEvent(helloEvent, t, 2)}, &EventSubscriber{expectedReceiveEvent(hiEvent, t, 2)}
+	var a, b, c, d = &EventSubscriber{expectedReceiveEvent(simpleEvent, t, 1)}, &EventSubscriber{expectedReceiveEvent(helloEvent, t, 1)}, &EventSubscriber{expectedReceiveEvent(helloEvent, t, 2)}, &EventSubscriber{expectedReceiveEvent(hiEvent, t, 2)}
 
-	eventbus.Subscribe(helloEvent, a)
+	eventbus.Subscribe(simpleEvent, a)
+	eventbus.Publish(simpleEvent)
+
 	eventbus.Subscribe(helloEvent, b)
-	eventbus.Subscribe(hiEvent, c)
+	eventbus.Subscribe(helloEvent, c)
+	eventbus.Subscribe(hiEvent, d)
 	eventbus.Publish(helloEvent)
 	eventbus.Publish(hiEvent)
 
-	eventbus.Unsubscribe(helloEvent, a)
+	eventbus.Unsubscribe(helloEvent, b)
 	eventbus.Publish(helloEvent)
 	eventbus.Publish(hiEvent)
 
@@ -68,8 +79,9 @@ func TestAsyncEventBus(t *testing.T) {
 		async:    true,
 	}
 
-	var helloEvent = HelloEvent{}
-	var hiEvent = HiEvent{}
+	var simpleEvent = SimpleEvent{}
+	var helloEvent = SubtypeEvent{"hello"}
+	var hiEvent = SubtypeEvent{"hi"}
 	wg := &sync.WaitGroup{}
 
 	expectedReceiveEvent := func(expected Event, t *testing.T, count int, wg *sync.WaitGroup) func(Event) {
@@ -88,24 +100,33 @@ func TestAsyncEventBus(t *testing.T) {
 		}
 	}
 
-	var a, b, c = &EventSubscriber{expectedReceiveEvent(helloEvent, t, 1, wg)}, &EventSubscriber{expectedReceiveEvent(helloEvent, t, 2, wg)}, &EventSubscriber{expectedReceiveEvent(hiEvent, t, 2, wg)}
+	var a, b, c, d = &EventSubscriber{expectedReceiveEvent(simpleEvent, t, 1, wg)}, &EventSubscriber{expectedReceiveEvent(helloEvent, t, 1, wg)}, &EventSubscriber{expectedReceiveEvent(helloEvent, t, 2, wg)}, &EventSubscriber{expectedReceiveEvent(hiEvent, t, 2, wg)}
 
-	eventbus.Subscribe(helloEvent, a)
+	eventbus.Subscribe(simpleEvent, a)
+	eventbus.Publish(simpleEvent)
+
 	eventbus.Subscribe(helloEvent, b)
-	eventbus.Subscribe(hiEvent, c)
+	eventbus.Subscribe(helloEvent, c)
+	eventbus.Subscribe(hiEvent, d)
 	eventbus.Publish(helloEvent)
 	eventbus.Publish(hiEvent)
 
-	eventbus.Unsubscribe(helloEvent, a)
+	eventbus.Unsubscribe(helloEvent, b)
 	eventbus.Publish(helloEvent)
 	eventbus.Publish(hiEvent)
 	wg.Wait()
 }
 
 func TestResolveType(t *testing.T) {
-	var evt = HelloEvent{}
-	result := resolveType(evt)
-	if result != "eventbus.HelloEvent" {
-		t.Errorf("expected eventbus.HelloEvent, get %s", result)
+	var evt1 = SimpleEvent{}
+	result1 := resolveType(evt1)
+	if result1 != "eventbus.SimpleEvent" {
+		t.Errorf("expected eventbus.SimpleEvent, get %s", result1)
+	}
+
+	var evt2 = SubtypeEvent{"hello"}
+	result2 := resolveType(evt2)
+	if result2 != "eventbus.SubtypeEvent.hello" {
+		t.Errorf("expected eventbus.SubtypeEvent.hello, get %s", result2)
 	}
 }

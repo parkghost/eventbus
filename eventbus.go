@@ -21,7 +21,7 @@ type EventHandler interface {
 }
 
 type Event interface {
-	Event()
+	Event() string
 }
 
 type None struct{}
@@ -54,7 +54,6 @@ func (self *EventBus) Subscribe(evt Event, handler EventHandler) {
 		handlers[handler] = None{}
 		self.handlers[eventType] = handlers
 	}
-
 }
 
 func (self *EventBus) Publish(evt Event) {
@@ -69,7 +68,6 @@ func (self *EventBus) Publish(evt Event) {
 			self.dispatch(evt, handler)
 		}
 	}
-
 }
 
 func (self *EventBus) dispatch(evt Event, handler EventHandler) {
@@ -81,6 +79,10 @@ func (self *EventBus) dispatch(evt Event, handler EventHandler) {
 }
 
 func resolveType(evt Event) string {
+	subEventType := evt.Event()
+	if subEventType != "" {
+		return reflect.TypeOf(evt).String() + "." + subEventType
+	}
 	return reflect.TypeOf(evt).String()
 }
 
