@@ -117,6 +117,33 @@ func TestAsyncEventBus(t *testing.T) {
 	wg.Wait()
 }
 
+func TestEventChannel(t *testing.T) {
+
+	eventbus := &EventBus{
+		locks:    NewSegmentedRWLock(32),
+		handlers: make(map[string]map[EventHandler]None),
+		async:    true,
+	}
+
+	var simpleEvent = SimpleEvent{}
+
+	start := make(chan bool)
+	worker := func() {
+		ch := NewEventChannel()
+		eventbus.Subscribe(simpleEvent, ch)
+		close(start)
+		actual := <-ch.C
+
+		if actual != simpleEvent {
+			t.Errorf("expected %s, get %s", simpleEvent, actual)
+		}
+	}
+	go worker()
+	<-start
+
+	eventbus.Publish(simpleEvent)
+}
+
 func TestResolveType(t *testing.T) {
 	var evt1 = SimpleEvent{}
 	result1 := resolveType(evt1)

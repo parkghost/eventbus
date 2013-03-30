@@ -3,33 +3,52 @@ package main
 import (
 	"../../eventbus"
 	"fmt"
+	"sync"
 )
 
-//define custom event which implements eventbus.Event interface
+//Subscribers and publisher run concurrently so here use WaitGroup to synchronize those 
+var start = &sync.WaitGroup{}
+var end = &sync.WaitGroup{}
+
+//Define a event which implements eventbus.Event interface
 type SimpleEvent struct{}
 
 func (self SimpleEvent) Event() string { return "" }
 
-//define custom subscriber which implements eventbus.EventHandler interface
+//Define a event handler which implements eventbus.EventHandler interface
 type EventSubscriber struct{}
 
 func (self EventSubscriber) OnEvent(evt eventbus.Event) {
-	//OUTPUT: receive event: main.SimpleEvent
-	fmt.Printf("receive event: %T\n", evt)
+	fmt.Printf("SubscriberOne receives event %T\n", evt)
+	end.Done()
+}
+
+//SubscriberOne use EventHandler for subscribe to main.SimpleEvent 
+func SubscriberOne() {
+	eventbus.Subscribe(SimpleEvent{}, &EventSubscriber{})
+	start.Done()
+}
+
+//SubscriberTwo use EventChannel for subscribe to main.SimpleEvent 
+func SubscriberTwo() {
+	ch := eventbus.NewEventChannel()
+	eventbus.Subscribe(SimpleEvent{}, ch)
+	start.Done()
+	fmt.Printf("SubscriberTwo receives event %T\n", <-ch.C)
+	end.Done()
 }
 
 func main() {
+	start.Add(2)
+	end.Add(2)
 
-	var simpleEvent = SimpleEvent{}
-	var handler = &EventSubscriber{}
+	go SubscriberOne()
+	go SubscriberTwo()
 
-	//the handler subscribe to main.SimpleEvent via eventbus
-	eventbus.Subscribe(simpleEvent, handler)
+	start.Wait()
 
-	//to publish main.SimpleEvent to eventbus and then eventbus will notify who has subscribed to this event
-	eventbus.Publish(simpleEvent)
+	//To publish main.SimpleEvent to eventbus and then eventbus will notify who has subscribed to this event
+	eventbus.Publish(SimpleEvent{})
 
-	//to block main goroutine for print out async result from eventbus
-	var input string
-	fmt.Scanln(&input)
+	end.Wait()
 }

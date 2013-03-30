@@ -10,18 +10,18 @@ import (
 	"reflect"
 )
 
-type EventBus struct {
-	locks    *SegmentedRWLock
-	handlers map[string]map[EventHandler]None
-	async    bool
-}
-
 type EventHandler interface {
 	OnEvent(evt Event)
 }
 
 type Event interface {
 	Event() string
+}
+
+type EventBus struct {
+	locks    *SegmentedRWLock
+	handlers map[string]map[EventHandler]None
+	async    bool
 }
 
 type None struct{}
@@ -86,6 +86,14 @@ func resolveType(evt Event) string {
 	return reflect.TypeOf(evt).String()
 }
 
+type EventChannel struct {
+	C chan Event
+}
+
+func (self *EventChannel) OnEvent(evt Event) {
+	self.C <- evt
+}
+
 var DefaultEventBus = &EventBus{
 	locks:    NewSegmentedRWLock(32),
 	handlers: make(map[string]map[EventHandler]None),
@@ -102,4 +110,10 @@ func Subscribe(evt Event, handler EventHandler) {
 
 func Publish(evt Event) {
 	DefaultEventBus.Publish(evt)
+}
+
+func NewEventChannel() *EventChannel {
+	return &EventChannel{
+		C: make(chan Event),
+	}
 }
