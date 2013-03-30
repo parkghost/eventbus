@@ -29,9 +29,9 @@ func (self EventSubscriber) OnEvent(evt Event) {
 func TestEventBus(t *testing.T) {
 
 	eventbus := &EventBus{
-		locks:    NewSegmentedRWLock(32),
 		handlers: make(map[string]map[EventHandler]None),
-		async:    false,
+		Locks:    NewSegmentedRWLock(32),
+		Async:    false,
 	}
 
 	var simpleEvent = SimpleEvent{}
@@ -72,9 +72,9 @@ func TestEventBus(t *testing.T) {
 func TestAsyncEventBus(t *testing.T) {
 
 	eventbus := &EventBus{
-		locks:    NewSegmentedRWLock(32),
 		handlers: make(map[string]map[EventHandler]None),
-		async:    true,
+		Locks:    NewSegmentedRWLock(32),
+		Async:    true,
 	}
 
 	var simpleEvent = SimpleEvent{}
@@ -118,9 +118,9 @@ func TestAsyncEventBus(t *testing.T) {
 func TestEventChannel(t *testing.T) {
 
 	eventbus := &EventBus{
-		locks:    NewSegmentedRWLock(32),
 		handlers: make(map[string]map[EventHandler]None),
-		async:    true,
+		Locks:    NewSegmentedRWLock(32),
+		Async:    true,
 	}
 
 	var simpleEvent = SimpleEvent{}

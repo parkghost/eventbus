@@ -28,16 +28,16 @@ func (self *EventChannel) OnEvent(evt Event) {
 }
 
 type EventBus struct {
-	locks    *SegmentedRWLock
 	handlers map[string]map[EventHandler]None
-	async    bool
+	Locks    *SegmentedRWLock
+	Async    bool
 }
 
 type None struct{}
 
 func (self *EventBus) Unsubscribe(evt Event, handler EventHandler) {
 	eventType := resolveType(evt)
-	locker := self.locks.locker(eventType)
+	locker := self.Locks.locker(eventType)
 	locker.Lock()
 	defer locker.Unlock()
 
@@ -51,7 +51,7 @@ func (self *EventBus) Unsubscribe(evt Event, handler EventHandler) {
 
 func (self *EventBus) Subscribe(evt Event, handler EventHandler) {
 	eventType := resolveType(evt)
-	locker := self.locks.locker(eventType)
+	locker := self.Locks.locker(eventType)
 	locker.Lock()
 	defer locker.Unlock()
 
@@ -67,7 +67,7 @@ func (self *EventBus) Subscribe(evt Event, handler EventHandler) {
 
 func (self *EventBus) Publish(evt Event) {
 	eventType := resolveType(evt)
-	locker := self.locks.locker(eventType)
+	locker := self.Locks.locker(eventType)
 	locker.RLock()
 	defer locker.RUnlock()
 
@@ -80,7 +80,7 @@ func (self *EventBus) Publish(evt Event) {
 }
 
 func (self *EventBus) dispatch(evt Event, handler EventHandler) {
-	if self.async {
+	if self.Async {
 		go handler.OnEvent(evt)
 	} else {
 		handler.OnEvent(evt)
@@ -128,9 +128,9 @@ func hash(bytes []byte) int {
 }
 
 var DefaultEventBus = &EventBus{
-	locks:    NewSegmentedRWLock(32),
 	handlers: make(map[string]map[EventHandler]None),
-	async:    true,
+	Locks:    NewSegmentedRWLock(32),
+	Async:    true,
 }
 
 func Unsubscribe(evt Event, handler EventHandler) {
