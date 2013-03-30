@@ -8,6 +8,7 @@ package eventbus
 import (
 	"fmt"
 	"reflect"
+	"sync"
 )
 
 type EventHandler interface {
