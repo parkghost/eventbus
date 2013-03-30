@@ -12,12 +12,10 @@ func (self SimpleEvent) Event() string {
 	return ""
 }
 
-type SubtypeEvent struct {
-	Text string
-}
+type SubtypeEvent string
 
 func (self SubtypeEvent) Event() string {
-	return self.Text
+	return string(self)
 }
 
 type EventSubscriber struct {
@@ -37,8 +35,8 @@ func TestEventBus(t *testing.T) {
 	}
 
 	var simpleEvent = SimpleEvent{}
-	var helloEvent = SubtypeEvent{"hello"}
-	var hiEvent = SubtypeEvent{"hi"}
+	var helloEvent = SubtypeEvent("hello")
+	var hiEvent = SubtypeEvent("hi")
 
 	expectedReceiveEvent := func(expected Event, t *testing.T, count int) func(Event) {
 		received := 0
@@ -80,8 +78,8 @@ func TestAsyncEventBus(t *testing.T) {
 	}
 
 	var simpleEvent = SimpleEvent{}
-	var helloEvent = SubtypeEvent{"hello"}
-	var hiEvent = SubtypeEvent{"hi"}
+	var helloEvent = SubtypeEvent("hello")
+	var hiEvent = SubtypeEvent("hi")
 	wg := &sync.WaitGroup{}
 
 	expectedReceiveEvent := func(expected Event, t *testing.T, count int, wg *sync.WaitGroup) func(Event) {
@@ -151,7 +149,7 @@ func TestResolveType(t *testing.T) {
 		t.Errorf("expected eventbus.SimpleEvent, get %s", result1)
 	}
 
-	var evt2 = SubtypeEvent{"hello"}
+	var evt2 = SubtypeEvent("hello")
 	result2 := resolveType(evt2)
 	if result2 != "eventbus.SubtypeEvent.hello" {
 		t.Errorf("expected eventbus.SubtypeEvent.hello, get %s", result2)
