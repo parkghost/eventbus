@@ -18,6 +18,14 @@ type Event interface {
 	Event() string
 }
 
+type EventChannel struct {
+	C chan Event
+}
+
+func (self *EventChannel) OnEvent(evt Event) {
+	self.C <- evt
+}
+
 type EventBus struct {
 	locks    *SegmentedRWLock
 	handlers map[string]map[EventHandler]None
@@ -118,14 +126,6 @@ func hash(bytes []byte) int {
 	return h
 }
 
-type EventChannel struct {
-	C chan Event
-}
-
-func (self *EventChannel) OnEvent(evt Event) {
-	self.C <- evt
-}
-
 var DefaultEventBus = &EventBus{
 	locks:    NewSegmentedRWLock(32),
 	handlers: make(map[string]map[EventHandler]None),
@@ -147,5 +147,11 @@ func Publish(evt Event) {
 func NewEventChannel() *EventChannel {
 	return &EventChannel{
 		C: make(chan Event),
+	}
+}
+
+func NewBufferedEventChannel(size int) *EventChannel {
+	return &EventChannel{
+		C: make(chan Event, size),
 	}
 }
