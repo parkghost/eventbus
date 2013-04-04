@@ -2,6 +2,7 @@ package eventbus
 
 import (
 	"sync"
+	"sync/atomic"
 	"testing"
 )
 
@@ -18,11 +19,11 @@ func (self SubtypeEvent) Event() string {
 	return string(self)
 }
 
-type EventSubscriber struct {
+type Subscriber struct {
 	expected func(evt Event)
 }
 
-func (self EventSubscriber) OnEvent(evt Event) {
+func (self Subscriber) OnEvent(evt Event) {
 	self.expected(evt)
 }
 
@@ -39,20 +40,20 @@ func TestEventBus(t *testing.T) {
 	var hiEvent = SubtypeEvent("hi")
 
 	expectedReceiveEvent := func(expected Event, t *testing.T, count int) func(Event) {
-		received := 0
+		var received int32 = 0
 		return func(actual Event) {
-			received += 1
+			atomic.AddInt32(&received, 1)
 			if actual != expected {
 				t.Errorf("expected %s, get %s", expected, actual)
 			}
 
-			if received > count {
+			if received > int32(count) {
 				t.Errorf("received events is over expected count %d, get event %T", count, actual)
 			}
 		}
 	}
 
-	var a, b, c, d = &EventSubscriber{expectedReceiveEvent(simpleEvent, t, 1)}, &EventSubscriber{expectedReceiveEvent(helloEvent, t, 1)}, &EventSubscriber{expectedReceiveEvent(helloEvent, t, 2)}, &EventSubscriber{expectedReceiveEvent(hiEvent, t, 2)}
+	var a, b, c, d = &Subscriber{expectedReceiveEvent(simpleEvent, t, 1)}, &Subscriber{expectedReceiveEvent(helloEvent, t, 1)}, &Subscriber{expectedReceiveEvent(helloEvent, t, 2)}, &Subscriber{expectedReceiveEvent(hiEvent, t, 2)}
 
 	eventbus.Subscribe(simpleEvent, a)
 	eventbus.Publish(simpleEvent)
@@ -83,22 +84,22 @@ func TestAsyncEventBus(t *testing.T) {
 	wg := &sync.WaitGroup{}
 
 	expectedReceiveEvent := func(expected Event, t *testing.T, count int, wg *sync.WaitGroup) func(Event) {
-		received := 0
+		var received int32 = 0
 		wg.Add(count)
 		return func(actual Event) {
-			received += 1
+			atomic.AddInt32(&received, 1)
 			wg.Add(-1)
 			if actual != expected {
 				t.Errorf("expected %s, get %s", expected, actual)
 			}
 
-			if received > count {
+			if received > int32(count) {
 				t.Errorf("received events is over expected count %d, get event %T", count, actual)
 			}
 		}
 	}
 
-	var a, b, c, d = &EventSubscriber{expectedReceiveEvent(simpleEvent, t, 1, wg)}, &EventSubscriber{expectedReceiveEvent(helloEvent, t, 1, wg)}, &EventSubscriber{expectedReceiveEvent(helloEvent, t, 2, wg)}, &EventSubscriber{expectedReceiveEvent(hiEvent, t, 2, wg)}
+	var a, b, c, d = &Subscriber{expectedReceiveEvent(simpleEvent, t, 1, wg)}, &Subscriber{expectedReceiveEvent(helloEvent, t, 1, wg)}, &Subscriber{expectedReceiveEvent(helloEvent, t, 2, wg)}, &Subscriber{expectedReceiveEvent(hiEvent, t, 2, wg)}
 
 	eventbus.Subscribe(simpleEvent, a)
 	eventbus.Publish(simpleEvent)
@@ -113,6 +114,31 @@ func TestAsyncEventBus(t *testing.T) {
 	eventbus.Publish(helloEvent)
 	eventbus.Publish(hiEvent)
 	wg.Wait()
+}
+
+func TestCallback(t *testing.T) {
+
+	eventbus := &EventBus{
+		handlers: make(map[string]map[Handler]None),
+		Locks:    NewSegmentedRWLock(32),
+		Async:    true,
+	}
+
+	var simpleEvent = SimpleEvent{}
+
+	start := make(chan bool)
+	worker := func() {
+		eventbus.Subscribe(simpleEvent, &Callback{func(actual Event) {
+			if actual != simpleEvent {
+				t.Errorf("expected %s, get %s", simpleEvent, actual)
+			}
+		}})
+		close(start)
+	}
+	go worker()
+	<-start
+
+	eventbus.Publish(simpleEvent)
 }
 
 func TestChannel(t *testing.T) {

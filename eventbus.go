@@ -11,12 +11,20 @@ import (
 	"sync"
 )
 
+type Event interface {
+	Event() string
+}
+
 type Handler interface {
 	OnEvent(evt Event)
 }
 
-type Event interface {
-	Event() string
+type Callback struct {
+	fn func(evt Event)
+}
+
+func (self *Callback) OnEvent(evt Event) {
+	self.fn(evt)
 }
 
 type Channel struct {
@@ -139,6 +147,10 @@ func Unsubscribe(evt Event, handler Handler) {
 
 func Subscribe(evt Event, handler Handler) {
 	DefaultEventBus.Subscribe(evt, handler)
+}
+
+func SubscribeWithCallback(evt Event, fn func(evt Event)) {
+	Subscribe(evt, &Callback{fn})
 }
 
 func Publish(evt Event) {

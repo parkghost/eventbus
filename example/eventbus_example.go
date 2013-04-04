@@ -6,7 +6,6 @@ import (
 	"sync"
 )
 
-//Subscribers and publisher run concurrently so here use WaitGroup to synchronize those 
 var start = &sync.WaitGroup{}
 var end = &sync.WaitGroup{}
 
@@ -15,17 +14,12 @@ type SimpleEvent struct{}
 
 func (self SimpleEvent) Event() string { return "" }
 
-//Define a event handler which implements eventbus.Handler interface
-type Subscriber struct{}
-
-func (self Subscriber) OnEvent(evt eventbus.Event) {
-	fmt.Printf("SubscriberOne receives event %T\n", evt)
-	end.Done()
-}
-
-//SubscriberOne use Handler for subscribe to main.SimpleEvent 
+//SubscriberOne use Callback for subscribe to main.SimpleEvent 
 func SubscriberOne() {
-	eventbus.Subscribe(SimpleEvent{}, &Subscriber{})
+	eventbus.SubscribeWithCallback(SimpleEvent{}, func(evt eventbus.Event) {
+		fmt.Printf("SubscriberOne receives event %T\n", evt)
+		end.Done()
+	})
 	start.Done()
 }
 
