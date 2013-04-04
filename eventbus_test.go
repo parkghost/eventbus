@@ -29,7 +29,7 @@ func (self EventSubscriber) OnEvent(evt Event) {
 func TestEventBus(t *testing.T) {
 
 	eventbus := &EventBus{
-		handlers: make(map[string]map[EventHandler]None),
+		handlers: make(map[string]map[Handler]None),
 		Locks:    NewSegmentedRWLock(32),
 		Async:    false,
 	}
@@ -72,7 +72,7 @@ func TestEventBus(t *testing.T) {
 func TestAsyncEventBus(t *testing.T) {
 
 	eventbus := &EventBus{
-		handlers: make(map[string]map[EventHandler]None),
+		handlers: make(map[string]map[Handler]None),
 		Locks:    NewSegmentedRWLock(32),
 		Async:    true,
 	}
@@ -115,10 +115,10 @@ func TestAsyncEventBus(t *testing.T) {
 	wg.Wait()
 }
 
-func TestEventChannel(t *testing.T) {
+func TestChannel(t *testing.T) {
 
 	eventbus := &EventBus{
-		handlers: make(map[string]map[EventHandler]None),
+		handlers: make(map[string]map[Handler]None),
 		Locks:    NewSegmentedRWLock(32),
 		Async:    true,
 	}
@@ -127,7 +127,7 @@ func TestEventChannel(t *testing.T) {
 
 	start := make(chan bool)
 	worker := func() {
-		ch := NewEventChannel()
+		ch := NewChannel()
 		eventbus.Subscribe(simpleEvent, ch)
 		close(start)
 		actual := <-ch.C

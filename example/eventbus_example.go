@@ -15,23 +15,23 @@ type SimpleEvent struct{}
 
 func (self SimpleEvent) Event() string { return "" }
 
-//Define a event handler which implements eventbus.EventHandler interface
-type EventSubscriber struct{}
+//Define a event handler which implements eventbus.Handler interface
+type Subscriber struct{}
 
-func (self EventSubscriber) OnEvent(evt eventbus.Event) {
+func (self Subscriber) OnEvent(evt eventbus.Event) {
 	fmt.Printf("SubscriberOne receives event %T\n", evt)
 	end.Done()
 }
 
-//SubscriberOne use EventHandler for subscribe to main.SimpleEvent 
+//SubscriberOne use Handler for subscribe to main.SimpleEvent 
 func SubscriberOne() {
-	eventbus.Subscribe(SimpleEvent{}, &EventSubscriber{})
+	eventbus.Subscribe(SimpleEvent{}, &Subscriber{})
 	start.Done()
 }
 
-//SubscriberTwo use EventChannel for subscribe to main.SimpleEvent 
+//SubscriberTwo use Channel for subscribe to main.SimpleEvent 
 func SubscriberTwo() {
-	ch := eventbus.NewEventChannel()
+	ch := eventbus.NewChannel()
 	eventbus.Subscribe(SimpleEvent{}, ch)
 	start.Done()
 	fmt.Printf("SubscriberTwo receives event %T\n", <-ch.C)

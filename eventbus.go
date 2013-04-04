@@ -11,7 +11,7 @@ import (
 	"sync"
 )
 
-type EventHandler interface {
+type Handler interface {
 	OnEvent(evt Event)
 }
 
@@ -19,23 +19,23 @@ type Event interface {
 	Event() string
 }
 
-type EventChannel struct {
+type Channel struct {
 	C chan Event
 }
 
-func (self *EventChannel) OnEvent(evt Event) {
+func (self *Channel) OnEvent(evt Event) {
 	self.C <- evt
 }
 
 type EventBus struct {
-	handlers map[string]map[EventHandler]None
+	handlers map[string]map[Handler]None
 	Locks    *SegmentedRWLock
 	Async    bool
 }
 
 type None struct{}
 
-func (self *EventBus) Unsubscribe(evt Event, handler EventHandler) {
+func (self *EventBus) Unsubscribe(evt Event, handler Handler) {
 	eventType := resolveType(evt)
 	locker := self.Locks.locker(eventType)
 	locker.Lock()
@@ -49,7 +49,7 @@ func (self *EventBus) Unsubscribe(evt Event, handler EventHandler) {
 	}
 }
 
-func (self *EventBus) Subscribe(evt Event, handler EventHandler) {
+func (self *EventBus) Subscribe(evt Event, handler Handler) {
 	eventType := resolveType(evt)
 	locker := self.Locks.locker(eventType)
 	locker.Lock()
@@ -59,7 +59,7 @@ func (self *EventBus) Subscribe(evt Event, handler EventHandler) {
 	if ok {
 		handlers[handler] = None{}
 	} else {
-		handlers := make(map[EventHandler]None)
+		handlers := make(map[Handler]None)
 		handlers[handler] = None{}
 		self.handlers[eventType] = handlers
 	}
@@ -79,7 +79,7 @@ func (self *EventBus) Publish(evt Event) {
 	}
 }
 
-func (self *EventBus) dispatch(evt Event, handler EventHandler) {
+func (self *EventBus) dispatch(evt Event, handler Handler) {
 	if self.Async {
 		go handler.OnEvent(evt)
 	} else {
@@ -128,16 +128,16 @@ func hash(bytes []byte) int {
 }
 
 var DefaultEventBus = &EventBus{
-	handlers: make(map[string]map[EventHandler]None),
+	handlers: make(map[string]map[Handler]None),
 	Locks:    NewSegmentedRWLock(32),
 	Async:    true,
 }
 
-func Unsubscribe(evt Event, handler EventHandler) {
+func Unsubscribe(evt Event, handler Handler) {
 	DefaultEventBus.Unsubscribe(evt, handler)
 }
 
-func Subscribe(evt Event, handler EventHandler) {
+func Subscribe(evt Event, handler Handler) {
 	DefaultEventBus.Subscribe(evt, handler)
 }
 
@@ -145,14 +145,14 @@ func Publish(evt Event) {
 	DefaultEventBus.Publish(evt)
 }
 
-func NewEventChannel() *EventChannel {
-	return &EventChannel{
+func NewChannel() *Channel {
+	return &Channel{
 		C: make(chan Event),
 	}
 }
 
-func NewBufferedEventChannel(size int) *EventChannel {
-	return &EventChannel{
+func NewBufferedChannel(size int) *Channel {
+	return &Channel{
 		C: make(chan Event, size),
 	}
 }
