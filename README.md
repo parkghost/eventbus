@@ -13,8 +13,7 @@ import (
 	"github.com/parkghost/eventbus"
 )
 
-var start = &sync.WaitGroup{}
-var end = &sync.WaitGroup{}
+var start, end sync.WaitGroup
 
 //Define a event which implements eventbus.Event interface
 type SimpleEvent struct{}
@@ -53,7 +52,6 @@ func main() {
 
 	end.Wait()
 }
-
 ```
 
 *output*

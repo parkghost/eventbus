@@ -47,7 +47,7 @@ func TestEventBus(t *testing.T) {
 				t.Errorf("expected %s, get %s", expected, actual)
 			}
 
-			if received > int32(count) {
+			if atomic.LoadInt32(&received) > int32(count) {
 				t.Errorf("received events is over expected count %d, get event %T", count, actual)
 			}
 		}
@@ -93,7 +93,7 @@ func TestAsyncEventBus(t *testing.T) {
 				t.Errorf("expected %s, get %s", expected, actual)
 			}
 
-			if received > int32(count) {
+			if atomic.LoadInt32(&received) > int32(count) {
 				t.Errorf("received events is over expected count %d, get event %T", count, actual)
 			}
 		}
