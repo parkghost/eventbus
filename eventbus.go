@@ -53,7 +53,7 @@ func (self *EventBus) Unsubscribe(evt Event, handler Handler) {
 	if ok {
 		delete(handlers, handler)
 	} else {
-		panic(fmt.Sprint("the event '%s' doesn't exist", eventType))
+		panic(fmt.Sprintf("the event '%s' doesn't exist", eventType))
 	}
 }
 
