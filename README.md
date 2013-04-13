@@ -56,8 +56,8 @@ func main() {
 *output*
 	
 	$ go run example/eventbus_example.go
-	SubscriberOne receives event main.SimpleEvent
-	SubscriberTwo receives event main.SimpleEvent
+	SubscriberOne receives event *main.SimpleEvent
+	SubscriberTwo receives event *main.SimpleEvent
 
 Authors
 -------

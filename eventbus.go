@@ -112,7 +112,6 @@ func (self *EventBus) dispatch(evt Event, handler Handler) {
 }
 
 func resolveType(evt Event) string {
-	eventType
 	subEventType := evt.Event()
 	if subEventType != "" {
 		return reflect.TypeOf(evt).String() + "." + subEventType
