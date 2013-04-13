@@ -2,6 +2,8 @@
 The EventBus allows publish-subscribe-style communication between
 components without requiring the components to explicitly register with one
 another 
+
+VERSION: 0.1.2
 */
 package eventbus
 
@@ -79,23 +81,38 @@ func (self *EventBus) Publish(evt Event) {
 	locker.RLock()
 	defer locker.RUnlock()
 
+	// TODO: detect handler leaking
 	handlers, ok := self.handlers[eventType]
 	if ok {
 		for handler, _ := range handlers {
-			self.dispatch(evt, handler)
+			if self.Async {
+				self.asyncDispatch(evt, handler)
+			} else {
+				self.dispatch(evt, handler)
+			}
 		}
 	}
 }
 
-func (self *EventBus) dispatch(evt Event, handler Handler) {
-	if self.Async {
+func (self *EventBus) asyncDispatch(evt Event, handler Handler) {
+	switch handler.(type) {
+	case *Channel:
+		select {
+		case handler.(*Channel).C <- evt:
+		default:
+			go handler.OnEvent(evt)
+		}
+	default:
 		go handler.OnEvent(evt)
-	} else {
-		handler.OnEvent(evt)
 	}
 }
 
+func (self *EventBus) dispatch(evt Event, handler Handler) {
+	handler.OnEvent(evt)
+}
+
 func resolveType(evt Event) string {
+	eventType
 	subEventType := evt.Event()
 	if subEventType != "" {
 		return reflect.TypeOf(evt).String() + "." + subEventType
@@ -149,8 +166,10 @@ func Subscribe(evt Event, handler Handler) {
 	DefaultEventBus.Subscribe(evt, handler)
 }
 
-func SubscribeWithCallback(evt Event, fn func(evt Event)) {
-	Subscribe(evt, &Callback{fn})
+func SubscribeWithCallback(evt Event, fn func(evt Event)) Handler {
+	handler := &Callback{fn}
+	Subscribe(evt, handler)
+	return handler
 }
 
 func Publish(evt Event) {

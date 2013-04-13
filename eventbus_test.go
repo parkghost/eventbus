@@ -9,21 +9,23 @@ import (
 type SimpleEvent struct {
 }
 
-func (self SimpleEvent) Event() string {
+func (self *SimpleEvent) Event() string {
 	return ""
 }
 
-type SubtypeEvent string
+type SubtypeEvent struct {
+	subtype string
+}
 
-func (self SubtypeEvent) Event() string {
-	return string(self)
+func (self *SubtypeEvent) Event() string {
+	return string(self.subtype)
 }
 
 type Subscriber struct {
 	expected func(evt Event)
 }
 
-func (self Subscriber) OnEvent(evt Event) {
+func (self *Subscriber) OnEvent(evt Event) {
 	self.expected(evt)
 }
 
@@ -35,9 +37,9 @@ func TestEventBus(t *testing.T) {
 		Async:    false,
 	}
 
-	var simpleEvent = SimpleEvent{}
-	var helloEvent = SubtypeEvent("hello")
-	var hiEvent = SubtypeEvent("hi")
+	var simpleEvent = &SimpleEvent{}
+	var helloEvent = &SubtypeEvent{"hello"}
+	var hiEvent = &SubtypeEvent{"hi"}
 
 	expectedReceiveEvent := func(expected Event, t *testing.T, count int) func(Event) {
 		var received int32 = 0
@@ -78,9 +80,9 @@ func TestAsyncEventBus(t *testing.T) {
 		Async:    true,
 	}
 
-	var simpleEvent = SimpleEvent{}
-	var helloEvent = SubtypeEvent("hello")
-	var hiEvent = SubtypeEvent("hi")
+	var simpleEvent = &SimpleEvent{}
+	var helloEvent = &SubtypeEvent{"hello"}
+	var hiEvent = &SubtypeEvent{"hi"}
 	wg := &sync.WaitGroup{}
 
 	expectedReceiveEvent := func(expected Event, t *testing.T, count int, wg *sync.WaitGroup) func(Event) {
@@ -117,14 +119,13 @@ func TestAsyncEventBus(t *testing.T) {
 }
 
 func TestCallback(t *testing.T) {
-
 	eventbus := &EventBus{
 		handlers: make(map[string]map[Handler]None),
 		Locks:    NewSegmentedRWLock(32),
 		Async:    true,
 	}
 
-	var simpleEvent = SimpleEvent{}
+	var simpleEvent = &SimpleEvent{}
 
 	start := make(chan bool)
 	worker := func() {
@@ -142,14 +143,13 @@ func TestCallback(t *testing.T) {
 }
 
 func TestChannel(t *testing.T) {
-
 	eventbus := &EventBus{
 		handlers: make(map[string]map[Handler]None),
 		Locks:    NewSegmentedRWLock(32),
 		Async:    true,
 	}
 
-	var simpleEvent = SimpleEvent{}
+	var simpleEvent = &SimpleEvent{}
 
 	start := make(chan bool)
 	worker := func() {
@@ -169,15 +169,17 @@ func TestChannel(t *testing.T) {
 }
 
 func TestResolveType(t *testing.T) {
-	var evt1 = SimpleEvent{}
+	var evt1 = &SimpleEvent{}
 	result1 := resolveType(evt1)
-	if result1 != "eventbus.SimpleEvent" {
-		t.Errorf("expected eventbus.SimpleEvent, get %s", result1)
+	if result1 != "*eventbus.SimpleEvent" {
+		t.Errorf("expected *eventbus.SimpleEvent, get %s", result1)
 	}
 
-	var evt2 = SubtypeEvent("hello")
+	var evt2 = &SubtypeEvent{"hello"}
 	result2 := resolveType(evt2)
-	if result2 != "eventbus.SubtypeEvent.hello" {
-		t.Errorf("expected eventbus.SubtypeEvent.hello, get %s", result2)
+	if result2 != "*eventbus.SubtypeEvent.hello" {
+		t.Errorf("expected *eventbus.SubtypeEvent.hello, get %s", result2)
 	}
 }
+
+// TODO: concurrentcy testing and benchmark
