@@ -1,9 +1,9 @@
 /*
 The EventBus allows publish-subscribe-style communication between
 components without requiring the components to explicitly register with one
-another 
+another
 
-VERSION: 0.1.2
+VERSION: 0.1.3
 */
 package eventbus
 
@@ -21,11 +21,11 @@ type Handler interface {
 	OnEvent(evt Event)
 }
 
-type Callback struct {
+type HandlerFunc struct {
 	fn func(evt Event)
 }
 
-func (self *Callback) OnEvent(evt Event) {
+func (self *HandlerFunc) OnEvent(evt Event) {
 	self.fn(evt)
 }
 
@@ -165,8 +165,8 @@ func Subscribe(evt Event, handler Handler) {
 	DefaultEventBus.Subscribe(evt, handler)
 }
 
-func SubscribeWithCallback(evt Event, fn func(evt Event)) Handler {
-	handler := &Callback{fn}
+func SubscribeFunc(evt Event, fn func(evt Event)) Handler {
+	handler := &HandlerFunc{fn}
 	Subscribe(evt, handler)
 	return handler
 }

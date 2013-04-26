@@ -9,7 +9,7 @@ type SimpleHandler struct {
 }
 
 func (s *SimpleHandler) OnEvent(event Event) {
-	fmt.Printf("receives event %T\n", event)
+	fmt.Printf("receive event %T\n", event)
 	close(s.quit)
 }
 
@@ -23,14 +23,14 @@ func ExampleHandler() {
 
 	<-quit
 	Unsubscribe(&SimpleEvent{}, handler)
-	// Output: receives event *eventbus.SimpleEvent
+	// Output: receive event *eventbus.SimpleEvent
 }
 
-func ExampleCallback() {
+func ExampleHandlerFunc() {
 	quit := make(chan bool)
 
-	handler := SubscribeWithCallback(&SimpleEvent{}, func(evt Event) {
-		fmt.Printf("receives event %T\n", evt)
+	handler := SubscribeFunc(&SimpleEvent{}, func(evt Event) {
+		fmt.Printf("receive event %T\n", evt)
 		close(quit)
 	})
 
@@ -38,7 +38,7 @@ func ExampleCallback() {
 
 	<-quit
 	Unsubscribe(&SimpleEvent{}, handler)
-	// Output: receives event *eventbus.SimpleEvent
+	// Output: receive event *eventbus.SimpleEvent
 }
 
 func ExampleChannel() {
@@ -48,7 +48,7 @@ func ExampleChannel() {
 	Subscribe(&SimpleEvent{}, handler)
 
 	go func() {
-		fmt.Printf("receives event %T\n", <-handler.C)
+		fmt.Printf("receive event %T\n", <-handler.C)
 		close(quit)
 	}()
 
@@ -56,5 +56,5 @@ func ExampleChannel() {
 
 	<-quit
 	Unsubscribe(&SimpleEvent{}, handler)
-	// Output: receives event *eventbus.SimpleEvent
+	// Output: receive event *eventbus.SimpleEvent
 }

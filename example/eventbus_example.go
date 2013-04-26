@@ -13,16 +13,16 @@ type SimpleEvent struct{}
 
 func (self *SimpleEvent) Event() string { return "" }
 
-//SubscriberOne use Callback for subscribe to main.SimpleEvent 
+//SubscriberOne use HandlerFunc for subscribe to main.SimpleEvent
 func SubscriberOne() {
-	eventbus.SubscribeWithCallback(&SimpleEvent{}, func(evt eventbus.Event) {
+	eventbus.SubscribeFunc(&SimpleEvent{}, func(evt eventbus.Event) {
 		fmt.Printf("SubscriberOne receives event %T\n", evt)
 		end.Done()
 	})
 	start.Done()
 }
 
-//SubscriberTwo use Channel for subscribe to main.SimpleEvent 
+//SubscriberTwo use Channel for subscribe to main.SimpleEvent
 func SubscriberTwo() {
 	ch := eventbus.NewChannel()
 	eventbus.Subscribe(&SimpleEvent{}, ch)

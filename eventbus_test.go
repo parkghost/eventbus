@@ -46,11 +46,11 @@ func TestEventBus(t *testing.T) {
 		return func(actual Event) {
 			atomic.AddInt32(&received, 1)
 			if actual != expected {
-				t.Errorf("expected %s, get %s", expected, actual)
+				t.Errorf("expected %s, got %s", expected, actual)
 			}
 
 			if atomic.LoadInt32(&received) > int32(count) {
-				t.Errorf("received events is over expected count %d, get event %T", count, actual)
+				t.Errorf("received events is over expected count %d, got event %T", count, actual)
 			}
 		}
 	}
@@ -92,11 +92,11 @@ func TestAsyncEventBus(t *testing.T) {
 			atomic.AddInt32(&received, 1)
 			wg.Add(-1)
 			if actual != expected {
-				t.Errorf("expected %s, get %s", expected, actual)
+				t.Errorf("expected %s, got %s", expected, actual)
 			}
 
 			if atomic.LoadInt32(&received) > int32(count) {
-				t.Errorf("received events is over expected count %d, get event %T", count, actual)
+				t.Errorf("received events is over expected count %d, got event %T", count, actual)
 			}
 		}
 	}
@@ -118,7 +118,7 @@ func TestAsyncEventBus(t *testing.T) {
 	wg.Wait()
 }
 
-func TestCallback(t *testing.T) {
+func TestHandlerFunc(t *testing.T) {
 	eventbus := &EventBus{
 		handlers: make(map[string]map[Handler]None),
 		Locks:    NewSegmentedRWLock(32),
@@ -129,9 +129,9 @@ func TestCallback(t *testing.T) {
 
 	start := make(chan bool)
 	worker := func() {
-		eventbus.Subscribe(simpleEvent, &Callback{func(actual Event) {
+		eventbus.Subscribe(simpleEvent, &HandlerFunc{func(actual Event) {
 			if actual != simpleEvent {
-				t.Errorf("expected %s, get %s", simpleEvent, actual)
+				t.Errorf("expected %s, got %s", simpleEvent, actual)
 			}
 		}})
 		close(start)
@@ -159,7 +159,7 @@ func TestChannel(t *testing.T) {
 		actual := <-ch.C
 
 		if actual != simpleEvent {
-			t.Errorf("expected %s, get %s", simpleEvent, actual)
+			t.Errorf("expected %s, got %s", simpleEvent, actual)
 		}
 	}
 	go worker()
@@ -172,13 +172,13 @@ func TestResolveType(t *testing.T) {
 	var evt1 = &SimpleEvent{}
 	result1 := resolveType(evt1)
 	if result1 != "*eventbus.SimpleEvent" {
-		t.Errorf("expected *eventbus.SimpleEvent, get %s", result1)
+		t.Errorf("expected *eventbus.SimpleEvent, got %s", result1)
 	}
 
 	var evt2 = &SubtypeEvent{"hello"}
 	result2 := resolveType(evt2)
 	if result2 != "*eventbus.SubtypeEvent.hello" {
-		t.Errorf("expected *eventbus.SubtypeEvent.hello, get %s", result2)
+		t.Errorf("expected *eventbus.SubtypeEvent.hello, got %s", result2)
 	}
 }
 
