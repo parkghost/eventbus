@@ -1,6 +1,8 @@
 EventBus
 =======
 
+[![Build Status](https://travis-ci.org/parkghost/eventbus.png)](https://travis-ci.org/parkghost/eventbus) 
+
 *a concurrent eventbus library written in go*
 
 ### Example:
