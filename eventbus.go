@@ -1,5 +1,5 @@
 /*
-The EventBus allows publish-subscribe-style communication between
+Package eventbus allows publish-subscribe-style communication between
 components without requiring the components to explicitly register with one
 another
 

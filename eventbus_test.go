@@ -42,7 +42,7 @@ func TestEventBus(t *testing.T) {
 	var hiEvent = &SubtypeEvent{"hi"}
 
 	expectedReceiveEvent := func(expected Event, t *testing.T, count int) func(Event) {
-		var received int32 = 0
+		var received int32
 		return func(actual Event) {
 			atomic.AddInt32(&received, 1)
 			if actual != expected {
@@ -86,7 +86,7 @@ func TestAsyncEventBus(t *testing.T) {
 	wg := &sync.WaitGroup{}
 
 	expectedReceiveEvent := func(expected Event, t *testing.T, count int, wg *sync.WaitGroup) func(Event) {
-		var received int32 = 0
+		var received int32
 		wg.Add(count)
 		return func(actual Event) {
 			atomic.AddInt32(&received, 1)
